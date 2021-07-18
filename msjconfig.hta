@@ -1,0 +1,289 @@
+﻿<html>
+<!--
+
+Miranda NG Sebijk Edition Configurator
+Version 1.6.0
+© 2007 - 2019, Home of the Sebijk.com
+http://www.sebijk.com
+This software is released under the terms of the GNU General Public License.
+GUID: {950D6BE9-B0C4-4815-9FB8-D88DF619B561}
+
+!-->
+<head>
+<meta name="vs_defaultClientScript" content="VBScript">
+<meta name="vs_targetSchema" content="http://www.sebijk.com">
+<style type="text/css">
+<!--
+body {	scrollbar-arrow-color: #000000;
+		font-family:Verdana;
+		font-style:normal;
+		font-size:12;
+		background-color:Buttonface }
+		
+a { font-size:12;
+font-style:bold;
+color: #000FFF; }
+-->
+</style>
+</head>
+<body>
+<title>Miranda NG Sebijk Edition</title>
+ <hta:application
+   id="MirandaIM"
+	ApplicationName="MirandaIM"
+	caption="yes"
+	maximizebutton="yes"
+	minimizebutton=="yes"
+	showintaskbar="yes"
+	singleinstance="no"
+	icon = "msjconfig.ico"
+	sysmenu="yes"
+	version="1.6.0.0"
+	Border = "dialog"
+    Borderstyle = "normal"
+    SCROLL = "no"
+    SCROLLFLAT = "yes"
+	caption = "yes"
+	INNERBORDER = "no"
+	WINDOWSTATE = "normal"
+	CONTEXTMENU = "no"
+	>
+<!--[if lt IE 7]>
+<script defer type="text/javascript" src="./pngfix.js"></script>
+<![endif]-->
+<script language="vbscript" type="text/vbscript" src="./language.vbs"></script>
+<script id="clientEventHandlersVBS" language="vbscript" type="text/vbscript">
+<!--
+function URLDecode(str)
+	dim re
+	set re = new RegExp
+
+	str = Replace(str, "+", " ")
+	
+	re.Pattern = "%([0-9a-fA-F]{2})"
+	re.Global = True
+	URLDecode = re.Replace(str, GetRef("URLDecodeHex"))
+end function
+
+' Replacement function for the above
+function URLDecodeHex(match, hex_digits, pos, source)
+	URLDecodeHex = chr("&H" & hex_digits)
+end function
+
+window.resizeTo 800, 500
+set MyShell = CreateObject("Wscript.shell")
+Set MyFiles = CreateObject("Scripting.FileSystemObject")
+Set umgebung = MyShell.Environment("PROCESS")
+title = "Miranda NG Sebijk Edition"
+temp = umgebung("temp")
+programfiles = umgebung("ProgramFiles")
+SystemDrive = umgebung("SystemDrive")
+profilepath = umgebung("userprofile") & "\Miranda NG"
+scriptname = URLDecode(document.location.pathname)
+thisdir = MyFiles.getparentfoldername(scriptname)
+mirandadir = MyFiles.getparentfoldername(thisdir)
+if MyFiles.FileExists(thisdir & "\globalprofile.txt") then profilepath = mirandadir & "\Profile"
+
+if Not MyFiles.FileExists(thisdir & "\language.vbs") then 
+  MsgBox "Missing language.vbs file! " & vbCr & title & " Configurator will now exit!", vbCritical, title
+  window.close
+End If
+  
+
+Sub createprofile
+	MsgBox("Function disabled")
+	'Variabeln einbinden
+	'profilname = InputBox(mirphrase_create_profile_desc,title,mirphrase_newprofilename)
+	'If profilname = "" then MsgBox mirphrase_cancelled, vbCritical, title
+	'If profilname = "" then Exit Sub
+	'if not MyFiles.FolderExists(profilepath) then MyFiles.CreateFolder(profilepath)
+	'if not MyFiles.FolderExists(profilepath & "\" & profilname) then MyFiles.CreateFolder(profilepath & "\" & profilname)
+	'MyFiles.CopyFile thisdir & "\Standard_legacy.dat" , profilepath & "\" & profilname & "\" & profilname & ".dat", 'OverwriteExisting
+	'Fertig
+	'MsgBox mirphrase_profilecreated, 64, title
+	'i=MyShell.popup(mirphrase_askstartmirandaim,,title,4 + vbQuestion)
+	'if i = 6 then Call loadmiranda()
+End Sub
+
+Sub loadmiranda
+	if MyFiles.FileExists(mirandadir & "\miranda32.exe") then MyShell.Run """" & mirandadir & "\miranda32.exe"""
+	if MyFiles.FileExists(mirandadir & "\miranda64.exe") then MyShell.Run """" & mirandadir & "\miranda64.exe"""
+End Sub
+
+Sub repair
+	Set dbtoolcmd = MyFiles.OpenTextFile( temp & "\dbtool.cmd", 2, True)
+	dbtoolcmd.Writeline "@echo off"
+	dbtoolcmd.Writeline "echo Miranda NG Sebijk Edition Datenbanktool"
+	dbtoolcmd.Writeline "echo (c) 2007 - 2019 Home of the Sebijk.com."
+	dbtoolcmd.Writeline "echo http://www.sebijk.com"
+	dbtoolcmd.Writeline "if ""%OS%""==""Windows_NT"" title " & title
+	dbtoolcmd.Writeline "echo."
+	dbtoolcmd.Writeline "cd "  & mirandadir
+	dbtoolcmd.Writeline "fixme.cmd"
+	dbtoolcmd.Writeline "pause"
+	dbtoolcmd.Close
+	MyShell.Run temp & "\dbtool.cmd",,true
+	MyFiles.DeleteFile temp & "\dbtool.cmd"
+End Sub
+
+
+Sub backup
+	Set AppShell = CreateObject("Shell.Application")
+	Set BrowsePfad = Appshell.BrowseForFolder(0, mirphrase_backupprofile_ask,  &H0001, 17)
+	On Error Resume Next
+	If BrowsePfad = "" Then exit sub
+	Ordner = BrowsePfad.ParentFolder.ParseName(BrowsePfad.Title).Path
+	If err.number > 0 Then
+		i=instr(BrowsePfad, ":")
+		Ordner = mid(BrowsePfad, i - 1, 1) & ":\"
+	End If
+	
+	If not (MyFiles.FolderExists(Ordner)) Then
+		g = msgbox(mirphrase_invalid_folder,vbCritical,title)
+		exit sub
+	End If
+	
+	 mirphrase_confirm_backup_complete = mirphrase_confirm_backup_1 & " " & Ordner & " " & mirphrase_confirm_backup_2 & " " & Ordner & "\Profile" & mirphrase_confirm_backup_3 _
+	& vbCr & mirphrase_confirm_backup_4
+
+	i=MyShell.popup(mirphrase_confirm_backup_complete,,title,4 + vbQuestion)
+	if i = 6 then 
+		if not MyFiles.FolderExists(Ordner) then MyFiles.CreateFolder(Ordner)
+			Set wbasjBatch = MyFiles.OpenTextFile( temp & "\Backup.bat", 2, True)
+			wbasjbatch.Writeline "@echo off"
+			wbasjbatch.Writeline "echo Miranda NG Sebijk Edition Profil-Backup"
+			wbasjbatch.Writeline "echo (c) 2007 - 2019 Home of the Sebijk.com.."
+			wbasjbatch.Writeline "echo http://www.sebijk.com"
+			wbasjbatch.Writeline "if ""%OS%""==""Windows_NT"" title " & title
+			wbasjbatch.Writeline "echo."
+			wbasjbatch.Writeline "md " & Ordner & "\Profile"
+			wbasjbatch.Writeline "copy """ & profilepath & "\*.dat"" " & Ordner & "\Profile"
+			wbasjbatch.Writeline "pause"
+			wbasjbatch.Close
+			MyShell.Run temp & "\Backup.bat",,true
+			MyFiles.DeleteFile temp & "\Backup.bat"
+			MsgBox mirphrase_backup_complete, 64, title
+	End If
+End Sub
+
+Sub restore
+	Set AppShell = CreateObject("Shell.Application")
+	Set BrowsePfad = Appshell.BrowseForFolder(0, mirphrase_recover_profile_ask,  &H0001, 17)
+	On Error Resume Next
+	If BrowsePfad = "" Then exit sub
+	Ordner = BrowsePfad.ParentFolder.ParseName(BrowsePfad.Title).Path
+		If err.number > 0 Then
+	i=instr(BrowsePfad, ":")
+	Ordner = mid(BrowsePfad, i - 1, 1) & ":\"
+	End If
+	
+	profilname = InputBox(mirphrase_recover_profile_askname,title)
+	If profilname = "" then MsgBox mirphrase_cancelled, vbCritical, title
+	If profilname = "" then Exit Sub
+	if Not MyFiles.FileExists(Ordner & "\"& profilname & ".dat") then  MsgBox mirphrase_profiledat_notexist, vbCritical, title
+	if Not MyFiles.FileExists(Ordner & "\"& profilname & ".dat") then  Exit Sub
+
+	i=MyShell.popup(mirphrase_confirm_restore_1 & " " & Ordner & "\"& profilname & ".dat" & mirphrase_confirm_restore_2 & vbCr & "" & vbCr _
+	& mirphrase_confirm_restore_3,vbExclamation,title,4 + vbQuestion)
+	if i = 6 then 
+	MyFiles.CopyFile Ordner & "\"& profilname & ".dat" , profilepath, OverwriteExisting
+	MsgBox mirphrase_profile_recovered, 64, title
+	else
+	MsgBox mirphrase_cancelled, vbCritical, title
+	End If
+End Sub
+
+Sub makeportable
+	Set AppShell = CreateObject("Shell.Application")
+	Set BrowsePfad = Appshell.BrowseForFolder(0, mirphrase_generate_portable,  &H0001, 17)
+	On Error Resume Next
+	If BrowsePfad = "" Then exit sub
+	Ordner = BrowsePfad.ParentFolder.ParseName(BrowsePfad.Title).Path
+	If err.number > 0 Then
+		i=instr(BrowsePfad, ":")
+		Ordner = mid(BrowsePfad, i - 1, 1) & ":\"
+	End If
+	
+	If not (MyFiles.FolderExists(Ordner)) Then
+		g = msgbox(mirphrase_invalid_folder,vbCritical,title)
+		exit sub
+	End If
+	
+
+	i=MyShell.popup(mirphrase_confirm_portable_1 & " " & Ordner & vbCr & vbCr & mirphrase_confirm_portable_2,,title,4 + vbQuestion)
+	if i = 6 then 
+		if not MyFiles.FolderExists(Ordner) then MyFiles.CreateFolder(Ordner)
+			Set wbasjBatch = MyFiles.OpenTextFile( temp & "\makeportable.bat", 2, True)
+			wbasjbatch.Writeline "@echo off"
+			wbasjbatch.Writeline "echo Miranda NG Sebijk Edition Portable Version-Ersteller"
+			wbasjbatch.Writeline "echo (c) 2007 - 2019 Home of the Sebijk.com."
+			wbasjbatch.Writeline "echo http://www.sebijk.com"
+			wbasjbatch.Writeline "if ""%OS%""==""Windows_NT"" title " & title
+			wbasjbatch.Writeline "echo."
+			wbasjbatch.Writeline "md """ & Ordner & "\Miranda NG"""
+			wbasjbatch.Writeline "md """ & Ordner & "\Miranda NG\miranda"""
+			wbasjbatch.Writeline "md """ & Ordner & "\Miranda NG\msjconfig"""
+			wbasjbatch.Writeline "xcopy /E /A """ & mirandadir & """ """ & Ordner & "\Miranda NG\miranda"""
+			wbasjbatch.Writeline "xcopy /E /A """ & thisdir & """ """ & Ordner & "\Miranda NG\msjconfig"""
+			wbasjbatch.Writeline "echo This is a portable Version of Miranda NG Sebijk Edition and the Configurator use the Profile Folder miranda\Profile. DO NOT DELETE THIS FILE, otherwise it will store Profiles in userprofile\Miranda NG. > """ & Ordner & "\Miranda NG\msjconfig\globalprofile.txt"""
+			wbasjbatch.Writeline "md """ & Ordner & "\Miranda NG\miranda\Profile"""
+			wbasjbatch.Writeline "xcopy /E /A /Y """ & profilepath & """ """ & Ordner & "\Miranda NG\miranda\Profile"""
+			wbasjbatch.Writeline "del """ & Ordner & """\Miranda NG\miranda\mirandaboot.ini"""
+			wbasjbatch.Writeline "copy """ & thisdir & "\mirandaboot_portable.ini"" """ & Ordner & "\Miranda NG\miranda\mirandaboot.ini"""
+			wbasjbatch.Writeline "echo."
+			wbasjbatch.Writeline "pause"
+			wbasjbatch.Close
+			MyShell.Run temp & "\makeportable.bat",,true
+			MyFiles.DeleteFile temp & "\makeportable.bat"
+			MsgBox mirphrase_success_portable, 64, title
+End If
+End Sub
+-->
+</script>
+</head>
+<body>
+	<font face="Arial,Helvetica,Verdana" size="5"><script language="VBScript" type="text/vbscript">document.write mirphrase_mirandasj_configurator</script></font>
+	<hr size="1" />
+	<font face="MS Sans Serif" size="2"><script language="VBScript" type="text/vbscript">document.write mirphrase_mirandasj_configurator_desc</script></font>
+	<hr size="1" />
+	<!-- ############## NEW MENU ##############  -->
+<table cellpadding="6" cellspacing="1" border="0" width="100%" align="center">
+<tbody>
+ 
+ <tr align="center">
+  <td style="width:33%">
+   <a href="#" onclick="loadmiranda"><img src="Images\miranda.gif" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_startmiranda</script></b></a>
+  </td>
+  <td style="width:33%">
+   <a href="#" onclick="makeportable"><img src="Images\portable.gif" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_create_portable</script></b></a>
+ </td>
+  <td style="width:33%">
+   <a href="https://www.sebijk.com/miranda.php?do=instruction" target="_blank"><img src="Images\help_index.png" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_installinstruction</script></b></a>
+  </td>
+ </tr>
+ <tr align="center">
+  <td style="width:33%">
+   <a href="#" onclick="backup"><img src="Images\database.png" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_backupprofile</script></b></a>
+  </td>
+  <td style="width:33%">
+   <a href="#" onclick="repair"><img src="Images\dbtool.gif" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_repairprofile</script></b></a>
+  </td>
+   <td style="width:33%">
+   <a href="#" onclick="restore"><img src="Images\database.png" border="0" alt="" title="" /><br />
+   <b><script language="VBScript" type="text/vbscript">document.write mirphrase_restoreprofile</script></b></a>
+  </td>
+ </tr>
+ <tr align="center">
+ </tr>
+</tbody>
+</table>
+<br />
+<!-- / ############## NEW MENU ##############  -->
+
+	</body>
+</html>
